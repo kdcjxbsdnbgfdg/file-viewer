@@ -107,10 +107,13 @@ int main(int argc, char *argv[]){
 		int bytesRead = read(STDIN_FILENO, input, INPUT_SIZE);
 		input[bytesRead] = 0;
 		if (!strcmp(input, "")) break;
-		// cursor move down
+		// cursor move up
 		else if (!strcmp(input, "\e[A")) {
-			if (cursorY > 0) cursorY--;
-			cursorMoved = -1;
+			if (cursorY > 0) {
+				cursorY--;
+				cursorMoved = -1;
+			}
+			else dprintf(STDOUT_FILENO, "\a");
 		}
 		// cursor move down
 		else if (!strcmp(input, "\e[B")) {
@@ -119,6 +122,7 @@ int main(int argc, char *argv[]){
 				cursorY++;
 				cursorMoved = 1;
 			}
+			else dprintf(STDOUT_FILENO, "\a");
 		}
 		else if (!strcmp(input, "\e[D")) printf("left\n");
 		else if (!strcmp(input, "\e[C")) printf("right\n");
