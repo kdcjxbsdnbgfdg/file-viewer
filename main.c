@@ -58,7 +58,8 @@ int main(int argc, char *argv[]){
 	struct dirent *directoryEntry;
 	char *workingDirectory;
 	if (argc > 1){
-		workingDirectory = argv[1];
+		workingDirectory = malloc(strlen(argv[1] + 1));
+		strcpy(workingDirectory, argv[1]);
 	}
 	else {
 		workingDirectory = "/";
