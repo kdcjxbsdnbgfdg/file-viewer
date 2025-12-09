@@ -33,11 +33,11 @@ char *getInput(){
 
 int main(int argc, char *argv[]){
 	// enable alternate screen buffer
-	printf("\e[?1049h");
+	dprintf(STDOUT_FILENO, "\e[?1049h");
 	// hides the cursor
-	printf("\e[?25l");
+	dprintf(STDOUT_FILENO, "\e[?25l");
 	// puts cursor at top left
-	printf("\e[1;1H");
+	dprintf(STDOUT_FILENO, "\e[1;1H");
 	//printf("Press escape to exit\n");
 
 	struct termios attr, newAttr;
@@ -90,6 +90,12 @@ int main(int argc, char *argv[]){
 	for (int i = 0; i < ySize - 1 && i < list.size; i++){
 		printf(" %s\n", list.data[i]);
 	}
+	//for (int i = 0; i < ySize && i < list.size; i++){
+	//	dprintf(STDOUT_FILENO, " %s\n", list.data[i]);
+	//}
+
+	// print the cursor at the start
+	dprintf(STDOUT_FILENO, "\e[1;1H>");
 
 	int cursorY = 0;
 	int scrollNum = 0;
@@ -100,12 +106,15 @@ int main(int argc, char *argv[]){
 		int bytesRead = read(STDIN_FILENO, input, INPUT_SIZE);
 		input[bytesRead] = 0;
 		if (!strcmp(input, "")) break;
+		// cursor move down
 		else if (!strcmp(input, "\e[A")) {
 			if (cursorY > 0) cursorY--;
-			cursorMoved = 1;
+			cursorMoved = -1;
 		}
+		// cursor move down
 		else if (!strcmp(input, "\e[B")) {
-			if (cursorY < list.size) {
+			// list.size - 1 because cursorY is 0 indexed
+			if (cursorY < list.size - 1) {
 				cursorY++;
 				cursorMoved = 1;
 			}
@@ -114,7 +123,11 @@ int main(int argc, char *argv[]){
 		else if (!strcmp(input, "\e[C")) printf("right\n");
 		else printf("%s\n", input);
 
-		if (cursorY > scrollNum + ySize){
+		// ySize - 1 because for some reason my terminal
+		// (or all terminals)
+		// only print ySize - 1 lines before scrolling
+		//if (cursorY >= scrollNum + ySize){
+		if (cursorY >= scrollNum + ySize - 1){
 			scrollNum++;
 		}
 		else if (cursorY < scrollNum){
@@ -129,9 +142,11 @@ int main(int argc, char *argv[]){
 			printf(" %s\n", list.data[i]);
 		}
 noscroll:
-
-		if (cursorMoved){
-		}
+		if (!cursorMoved) continue;
+		// clears cursor from old position
+		dprintf(STDOUT_FILENO, "\e[%d;1H ", cursorY - cursorMoved + 1 - scrollNum);
+		// adds cursor to new position
+		dprintf(STDOUT_FILENO, "\e[%d;1H>", cursorY + 1 - scrollNum);
 	}
 cleanup:
 	tcsetattr(0, 0, &attr);
